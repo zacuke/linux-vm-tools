@@ -60,6 +60,9 @@ cat >> /etc/xrdp/startubuntu.sh << EOF
 #!/bin/sh
 export GNOME_SHELL_SESSION_MODE=ubuntu
 export XDG_CURRENT_DESKTOP=ubuntu:GNOME
+export XDG_SESSION_TYPE=x11
+export GDK_BACKEND=x11
+export CLUTTER_BACKEND=x11
 exec /etc/xrdp/startwm.sh
 EOF
 chmod a+x /etc/xrdp/startubuntu.sh
@@ -98,6 +101,15 @@ EOF
 # reconfigure the service
 systemctl daemon-reload
 systemctl start xrdp
+
+if [ -f /etc/gdm3/custom.conf ]; then
+    if ! grep -q "^WaylandEnable=false" /etc/gdm3/custom.conf; then
+        echo "WaylandEnable=false" >> /etc/gdm3/custom.conf
+    fi
+    sed -i 's/^AutomaticLoginEnable=.*/AutomaticLoginEnable=false/' /etc/gdm3/custom.conf
+    sed -i 's/^AutomaticLogin=.*/# AutomaticLogin=/' /etc/gdm3/custom.conf
+fi
+
 
 #
 # End XRDP
