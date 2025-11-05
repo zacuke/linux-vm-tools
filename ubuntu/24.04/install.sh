@@ -60,6 +60,11 @@ cat >> /etc/xrdp/startubuntu.sh << EOF
 #!/bin/sh
 export GNOME_SHELL_SESSION_MODE=ubuntu
 export XDG_CURRENT_DESKTOP=ubuntu:GNOME
+# Enable software rendering for XRDP session only
+if [ -n "\$XRDP_SESSION" ]; then
+    export LIBGL_ALWAYS_SOFTWARE=1
+    export GALLIUM_DRIVER=llvmpipe
+fi
 exec /etc/xrdp/startwm.sh
 EOF
 chmod a+x /etc/xrdp/startubuntu.sh
@@ -77,6 +82,11 @@ sed -i_orig -e 's/allowed_users=console/allowed_users=anybody/g' /etc/X11/Xwrapp
 # Blacklist the vmw module
 if [ ! -e /etc/modprobe.d/blacklist-vmw_vsock_vmci_transport.conf ]; then
   echo "blacklist vmw_vsock_vmci_transport" > /etc/modprobe.d/blacklist-vmw_vsock_vmci_transport.conf
+fi
+
+# Blacklist simpledrm to prevent conflict with hyperv_drm
+if [ ! -e /etc/modprobe.d/blacklist-simpledrm.conf ]; then
+  echo "blacklist simpledrm" > /etc/modprobe.d/blacklist-simpledrm.conf
 fi
 
 #Ensure hv_sock gets loaded
