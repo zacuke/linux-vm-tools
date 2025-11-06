@@ -39,7 +39,7 @@ apt install -y linux-tools-virtual${HWE}
 apt install -y linux-cloud-tools-virtual${HWE}
 
 # Install XFCE desktop (more compatible with XRDP)
-apt install -y xfce4 xfce4-goodies xdg-desktop-portal-xapp
+apt install -y xfce4 xfce4-goodies
 
 # Install the xrdp service so we have the auto start behavior
 apt install -y xrdp
@@ -60,46 +60,18 @@ sed -i_orig -e 's/bitmap_compression=true/bitmap_compression=false/g' /etc/xrdp/
 # Create XFCE session script for XRDP
 cat > /etc/xrdp/startxfce.sh << 'EOF'
 #!/bin/sh
-# Initialize proper session environment for XRDP
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
 export XDG_CURRENT_DESKTOP=XFCE
 export XDG_SESSION_DESKTOP=xfce
 export XDG_CONFIG_DIRS=/etc/xdg/xdg-xfce:/etc/xdg
 export XDG_DATA_DIRS=/usr/share/xfce:/usr/local/share:/usr/share:/var/lib/snapd/desktop
-export XDG_RUNTIME_DIR=/run/user/$(id -u)
-export XDG_SESSION_PATH=/run/user/$(id -u)
 export LIBGL_ALWAYS_SOFTWARE=1
 export GALLIUM_DRIVER=llvmpipe
-
-# Initialize D-Bus session bus if not already running
-if [ -z "$DBUS_SESSION_BUS_ADDRESS" ]; then
-    eval $(dbus-launch --sh-syntax --exit-with-session)
-fi
-
-# Ensure the runtime directory exists
-mkdir -p $XDG_RUNTIME_DIR
-
-# Configure XDG desktop portal to use XFCE implementation
-export XDG_CURRENT_DESKTOP=XFCE
-export DESKTOP_SESSION=xfce
-
-# Stop conflicting GNOME services that interfere with XFCE
-systemctl --user stop xdg-desktop-portal-gtk 2>/dev/null || true
-systemctl --user mask xdg-desktop-portal-gtk 2>/dev/null || true
-
-# Start XFCE-compatible portal service
-systemctl --user start xdg-desktop-portal-xapp 2>/dev/null || true
-
-# Update desktop file database to fix slow application launching
-update-desktop-database /usr/share/applications 2>/dev/null || true
-
 if [ -r /etc/default/locale ]; then
   . /etc/default/locale
   export LANG LANGUAGE
 fi
-
-# Start XFCE desktop
 startxfce4
 EOF
 chmod a+x /etc/xrdp/startxfce.sh
@@ -109,13 +81,6 @@ sed -i_orig -e 's/startwm/startxfce/g' /etc/xrdp/sesman.ini
 
 # rename the redirected drives to 'shared-drives'
 sed -i -e 's/FuseMountName=thinclient_drives/FuseMountName=shared-drives/g' /etc/xrdp/sesman.ini
-
-# Configure XDG desktop portal to prefer XFCE implementation
-mkdir -p /etc/xdg/xdg-xfce
-cat > /etc/xdg/xdg-xfce/xdg-desktop-portal.conf << 'EOF'
-[preferred]
-default=gtk
-EOF
 
 # Changed the allowed_users
 sed -i_orig -e 's/allowed_users=console/allowed_users=anybody/g' /etc/X11/Xwrapper.config
@@ -150,20 +115,10 @@ EOF
 systemctl daemon-reload
 systemctl start xrdp
 
-###############################################################################
-# Disable auto login
 #
+# End XRDP
+###############################################################################
 
-# Disable GDM auto login if configured
-if [ -f /etc/gdm3/custom.conf ]; then
-    sed -i 's/^AutomaticLoginEnable=.*/AutomaticLoginEnable=false/' /etc/gdm3/custom.conf
-    sed -i 's/^AutomaticLogin=.*/# AutomaticLogin=/' /etc/gdm3/custom.conf
-fi
-
-# Disable LightDM auto login if configured
-if [ -f /etc/lightdm/lightdm.conf ]; then
-    sed -i 's/^autologin-user=.*/# autologin-user=/' /etc/lightdm/lightdm.conf
-    sed -i 's/^autologin-user-timeout=.*/# autologin-user-timeout=/' /etc/lightdm/lightdm.conf
-fi
-
-reboot
+echo "Install is complete."
+echo "Reboot your machine to begin using XRDP."
+echo "XRDP will now use XFCE desktop which is more compatible with remote sessions."
