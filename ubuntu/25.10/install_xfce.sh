@@ -38,18 +38,9 @@ fi
 apt install -y linux-tools-virtual${HWE}
 apt install -y linux-cloud-tools-virtual${HWE}
 
-# Install minimal XFCE packages that don't require display managers
-apt install -y --no-install-recommends \
-    libxfce4ui-utils \
-    thunar \
-    xfce4-appfinder \
-    xfce4-panel \
-    xfce4-pulseaudio-plugin \
-    xfce4-settings \
-    xfconf \
-    xfdesktop4 \
-    xfwm4
-    
+# Install XFCE desktop (more compatible with XRDP)
+apt install -y xfce4 xfce4-goodies
+
 # Install the xrdp service so we have the auto start behavior
 apt install -y xrdp
 
@@ -235,3 +226,4 @@ EOF
 
 echo "Install is complete."
 echo "Reboot your machine to begin using XRDP."
+echo "XRDP will now use XFCE desktop which is more compatible with remote sessions."
