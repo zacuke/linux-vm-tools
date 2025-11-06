@@ -38,9 +38,26 @@ fi
 apt install -y linux-tools-virtual${HWE}
 apt install -y linux-cloud-tools-virtual${HWE}
 
-# Install XFCE desktop (more compatible with XRDP)
-apt install -y xfce4 xfce4-goodies
+apt install -y \
+    libxfce4ui-utils \
+    thunar \
+    xfce4-appfinder \
+    xfce4-panel \
+    xfce4-pulseaudio-plugin \
+    xfce4-session \
+    xfce4-settings \
+    xfconf \
+    xfdesktop4 \
+    xfwm4
 
+apt install -y \
+    desktop-base \
+    mate-polkit \
+    tango-icon-theme \
+    thunar-volman \
+    xfce4-notifyd \
+    xorg
+    
 # Install the xrdp service so we have the auto start behavior
 apt install -y xrdp
 
@@ -226,4 +243,3 @@ EOF
 
 echo "Install is complete."
 echo "Reboot your machine to begin using XRDP."
-echo "XRDP will now use XFCE desktop which is more compatible with remote sessions."
