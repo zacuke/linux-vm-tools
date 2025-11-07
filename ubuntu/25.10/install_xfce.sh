@@ -60,7 +60,32 @@ sed -i_orig -e 's/bitmap_compression=true/bitmap_compression=false/g' /etc/xrdp/
 # Create XFCE session script for XRDP
 cat > /etc/xrdp/startxfce.sh << 'EOF'
 #!/bin/sh
-export DISPLAY=${DISPLAY:-:10.0}
+# Dynamic display detection for XRDP sessions
+xrdp_display=$(ps aux 2>/dev/null | grep -E 'Xorg.*:.*-auth.*xrdp' | grep -v grep | sed -n 's/.*:\([0-9]\+\)\.*/\1/p' | head -1)
+
+if [ -n "$xrdp_display" ]; then
+    export DISPLAY=":${xrdp_display}.0"
+    echo "Detected XRDP display: $DISPLAY"
+elif [ -n "$DISPLAY" ]; then
+    echo "Using existing DISPLAY: $DISPLAY"
+else
+    # Fallback to checking X sockets for highest display number
+    if [ -d "/tmp/.X11-unix/" ]; then
+        highest_display=$(ls /tmp/.X11-unix/ 2>/dev/null | grep -E '^X[0-9]+$' | sed 's/X//' | sort -n | tail -1)
+        if [ -n "$highest_display" ]; then
+            next_display=$((highest_display + 1))
+            export DISPLAY=":${next_display}.0"
+            echo "Using next available display: $DISPLAY"
+        else
+            export DISPLAY=":10.0"
+            echo "Using fallback display: $DISPLAY"
+        fi
+    else
+        export DISPLAY=":10.0"
+        echo "Using default display: $DISPLAY"
+    fi
+fi
+
 export XAUTHORITY=${XAUTHORITY:-/home/$(whoami)/.Xauthority}
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
