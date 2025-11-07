@@ -1,4 +1,5 @@
 #!/bin/bash
+export DEBIAN_FRONTEND=noninteractive
 
 #
 # This script is for Ubuntu 22.04 Jammy Jellyfish to download and install XRDP+XORGXRDP via
@@ -171,6 +172,23 @@ fi
  
 # Configure XFCE session for better compatibility
 mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml
+
+# Fix desktop portal configuration to prevent 30-second timeouts
+mkdir -p /etc/xdg/xdg-xfce
+cat > /etc/xdg/xdg-xfce/xdg-desktop-portal.conf << 'EOF'
+[preferred]
+default=gtk
+
+[org.freedesktop.impl.portal.FileChooser]
+org.gnome.SessionManager=/org/gnome/SessionManager
+EOF
+
+# Ensure portal services can access X11 display
+if [ -f /etc/gdm3/custom.conf ]; then
+    if ! grep -q "^WaylandEnable=false" /etc/gdm3/custom.conf; then
+        echo "WaylandEnable=false" >> /etc/gdm3/custom.conf
+    fi
+fi
 
 # Set XFCE as default session for all users
 update-alternatives --install /usr/bin/x-session-manager x-session-manager /usr/bin/startxfce4 50
