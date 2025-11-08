@@ -209,12 +209,7 @@ DesktopNames=XFCE
 EOF
 fi
 
-systemctl --user mask xdg-desktop-portal-gtk.service 2>/dev/null || true
-
-
 echo "Install is complete."
 echo "Reboot your machine to begin using XRDP."
 echo "XRDP will now use XFCE desktop which is more compatible with remote sessions."
-
-# Wait 5 seconds for reasons
-sleep 5
+ 
