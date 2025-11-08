@@ -61,8 +61,7 @@ sed -i_orig -e 's/bitmap_compression=true/bitmap_compression=false/g' /etc/xrdp/
 # Create XFCE session script for XRDP
 cat > /etc/xrdp/startxfce.sh << 'EOF'
 #!/bin/sh
-#export DISPLAY=${DISPLAY:-:10.0}
-export XAUTHORITY=${XAUTHORITY:-/home/$(whoami)/.Xauthority}
+
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
 export XDG_CURRENT_DESKTOP=XFCE
@@ -73,25 +72,22 @@ export XDG_SESSION_PATH=/run/user/$(id -u)
 export LIBGL_ALWAYS_SOFTWARE=1
 export GALLIUM_DRIVER=llvmpipe
 
-# Create XDG runtime directory if it doesn't exist
-if [ ! -d "$XDG_RUNTIME_DIR" ]; then
-    export XDG_RUNTIME_DIR=/run/user/$(id -u)
-    mkdir -p "$XDG_RUNTIME_DIR"
-    chmod 0700 "$XDG_RUNTIME_DIR"
-fi
+# # Create XDG runtime directory if it doesn't exist
+# if [ ! -d "$XDG_RUNTIME_DIR" ]; then
+#     export XDG_RUNTIME_DIR=/run/user/$(id -u)
+#     mkdir -p "$XDG_RUNTIME_DIR"
+#     chmod 0700 "$XDG_RUNTIME_DIR"
+# fi
 
-if [ -r /etc/default/locale ]; then
-  . /etc/default/locale
-  export LANG LANGUAGE
-fi
+# if [ -r /etc/default/locale ]; then
+#   . /etc/default/locale
+#   export LANG LANGUAGE
+# fi
 
-# Start dbus if not running
-if ! pgrep -x dbus-daemon > /dev/null; then
-    dbus-launch --sh-syntax
-fi
-
-# Mask GTK portal service to prevent program launch delays in XFCE sessions
-systemctl --user mask xdg-desktop-portal-gtk.service 2>/dev/null || true
+# # Start dbus if not running
+# if ! pgrep -x dbus-daemon > /dev/null; then
+#     dbus-launch --sh-syntax
+# fi
 
 startxfce4
 EOF
@@ -122,36 +118,36 @@ if [ ! -e /etc/modules-load.d/hv_sock.conf ]; then
 fi
 
 # Configure the policy xrdp session
-mkdir -p /etc/polkit-1/localauthority/50-local.d/
-cat > /etc/polkit-1/localauthority/50-local.d/45-allow-colord.pkla <<EOF
-[Allow Colord all Users]
-Identity=unix-user:*
-Action=org.freedesktop.color-manager.create-device;org.freedesktop.color-manager.create-profile;org.freedesktop.color-manager.delete-device;org.freedesktop.color-manager.delete-profile;org.freedesktop.color-manager.modify-device;org.freedesktop.color-manager.modify-profile
-ResultAny=no
-ResultInactive=no
-ResultActive=yes
-EOF
+# mkdir -p /etc/polkit-1/localauthority/50-local.d/
+# cat > /etc/polkit-1/localauthority/50-local.d/45-allow-colord.pkla <<EOF
+# [Allow Colord all Users]
+# Identity=unix-user:*
+# Action=org.freedesktop.color-manager.create-device;org.freedesktop.color-manager.create-profile;org.freedesktop.color-manager.delete-device;org.freedesktop.color-manager.delete-profile;org.freedesktop.color-manager.modify-device;org.freedesktop.color-manager.modify-profile
+# ResultAny=no
+# ResultInactive=no
+# ResultActive=yes
+# EOF
 
-# reconfigure the service
-systemctl daemon-reload
-systemctl start xrdp
+# # reconfigure the service
+# systemctl daemon-reload
+# systemctl start xrdp
 
-# Fix GNOME Keyring PAM daemon control file issue
-mkdir -p /var/run/user/$(id -u)
-chmod 0700 /var/run/user/$(id -u)
+# # Fix GNOME Keyring PAM daemon control file issue
+# mkdir -p /var/run/user/$(id -u)
+# chmod 0700 /var/run/user/$(id -u)
 
-# Ensure gnome-keyring-daemon is installed and configured
-apt install -y gnome-keyring
+# # Ensure gnome-keyring-daemon is installed and configured
+# apt install -y gnome-keyring
 
-# Configure PAM for XRDP sessions
-if [ -f /etc/pam.d/xrdp-sesman ]; then
-    if ! grep -q "auth optional pam_gnome_keyring.so" /etc/pam.d/xrdp-sesman; then
-        echo "auth optional pam_gnome_keyring.so" >> /etc/pam.d/xrdp-sesman
-    fi
-    if ! grep -q "session optional pam_gnome_keyring.so auto_start" /etc/pam.d/xrdp-sesman; then
-        echo "session optional pam_gnome_keyring.so auto_start" >> /etc/pam.d/xrdp-sesman
-    fi
-fi
+# # Configure PAM for XRDP sessions
+# if [ -f /etc/pam.d/xrdp-sesman ]; then
+#     if ! grep -q "auth optional pam_gnome_keyring.so" /etc/pam.d/xrdp-sesman; then
+#         echo "auth optional pam_gnome_keyring.so" >> /etc/pam.d/xrdp-sesman
+#     fi
+#     if ! grep -q "session optional pam_gnome_keyring.so auto_start" /etc/pam.d/xrdp-sesman; then
+#         echo "session optional pam_gnome_keyring.so auto_start" >> /etc/pam.d/xrdp-sesman
+#     fi
+# fi
 
 #
 # End XRDP
@@ -166,50 +162,32 @@ if [ -f /etc/gdm3/custom.conf ]; then
     sed -i 's/^AutomaticLogin=.*/# AutomaticLogin=/' /etc/gdm3/custom.conf
 fi
 
-# Disable LightDM auto login if configured
-if [ -f /etc/lightdm/lightdm.conf ]; then
-    sed -i 's/^autologin-user=.*/# autologin-user=/' /etc/lightdm/lightdm.conf
-    sed -i 's/^autologin-user-timeout=.*/# autologin-user-timeout=/' /etc/lightdm/lightdm.conf
-fi
+# # Disable LightDM auto login if configured
+# if [ -f /etc/lightdm/lightdm.conf ]; then
+#     sed -i 's/^autologin-user=.*/# autologin-user=/' /etc/lightdm/lightdm.conf
+#     sed -i 's/^autologin-user-timeout=.*/# autologin-user-timeout=/' /etc/lightdm/lightdm.conf
+# fi
 
  
 # Configure XFCE session for better compatibility
-mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml
+# mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml
 
-# Fix desktop portal configuration to prevent 30-second timeouts
-mkdir -p /etc/xdg/xdg-xfce
-cat > /etc/xdg/xdg-xfce/xdg-desktop-portal.conf << 'EOF'
-[preferred]
-default=gtk
+# # Set XFCE as default session for all users
+# update-alternatives --install /usr/bin/x-session-manager x-session-manager /usr/bin/startxfce4 50
+# update-alternatives --set x-session-manager /usr/bin/startxfce4
 
-[org.freedesktop.impl.portal.FileChooser]
-org.gnome.SessionManager=/org/gnome/SessionManager
-EOF
-
-# Ensure portal services can access X11 display
-if [ -f /etc/gdm3/custom.conf ]; then
-    if ! grep -q "^WaylandEnable=false" /etc/gdm3/custom.conf; then
-        echo "WaylandEnable=false" >> /etc/gdm3/custom.conf
-    fi
-fi
-
-# Set XFCE as default session for all users
-update-alternatives --install /usr/bin/x-session-manager x-session-manager /usr/bin/startxfce4 50
-update-alternatives --set x-session-manager /usr/bin/startxfce4
-
-# Ensure XFCE session files are properly configured
-if [ ! -f /usr/share/xsessions/xfce.desktop ]; then
-    cat > /usr/share/xsessions/xfce.desktop << 'EOF'
-[Desktop Entry]
-Name=Xfce Session
-Comment=Use this session to run Xfce as your desktop environment
-Exec=startxfce4
-Type=XSession
-DesktopNames=XFCE
-EOF
-fi
+# # Ensure XFCE session files are properly configured
+# if [ ! -f /usr/share/xsessions/xfce.desktop ]; then
+#     cat > /usr/share/xsessions/xfce.desktop << 'EOF'
+# [Desktop Entry]
+# Name=Xfce Session
+# Comment=Use this session to run Xfce as your desktop environment
+# Exec=startxfce4
+# Type=XSession
+# DesktopNames=XFCE
+# EOF
+# fi
 
 echo "Install is complete."
 echo "Reboot your machine to begin using XRDP."
 echo "XRDP will now use XFCE desktop which is more compatible with remote sessions."
- 
