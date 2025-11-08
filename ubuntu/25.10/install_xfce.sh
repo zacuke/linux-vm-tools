@@ -149,45 +149,37 @@ if [ -f /etc/pam.d/xrdp-sesman ]; then
     fi
 fi
 
-#
-# End XRDP
-###############################################################################
-###############################################################################
-# Disable auto login
-#
-
 # Disable GDM auto login if configured
 if [ -f /etc/gdm3/custom.conf ]; then
     sed -i 's/^AutomaticLoginEnable=.*/AutomaticLoginEnable=false/' /etc/gdm3/custom.conf
     sed -i 's/^AutomaticLogin=.*/# AutomaticLogin=/' /etc/gdm3/custom.conf
 fi
 
-# # Disable LightDM auto login if configured
-# if [ -f /etc/lightdm/lightdm.conf ]; then
-#     sed -i 's/^autologin-user=.*/# autologin-user=/' /etc/lightdm/lightdm.conf
-#     sed -i 's/^autologin-user-timeout=.*/# autologin-user-timeout=/' /etc/lightdm/lightdm.conf
-# fi
 
- 
-# Configure XFCE session for better compatibility
-# mkdir -p /etc/xdg/xfce4/xfconf/xfce-perchannel-xml
+#
+# End XRDP
+###############################################################################
 
-# # Set XFCE as default session for all users
-# update-alternatives --install /usr/bin/x-session-manager x-session-manager /usr/bin/startxfce4 50
-# update-alternatives --set x-session-manager /usr/bin/startxfce4
+###############################################################################
+# OPTIONAL
+#
+# Configure XFCE window scaling for better readability
+mkdir -p /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/
+cat > /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<channel name="xsettings" version="1.0">
+  <property name="Gdk/WindowScalingFactor" type="int" value="2"/>
+</channel>
+EOF
 
-# # Ensure XFCE session files are properly configured
-# if [ ! -f /usr/share/xsessions/xfce.desktop ]; then
-#     cat > /usr/share/xsessions/xfce.desktop << 'EOF'
-# [Desktop Entry]
-# Name=Xfce Session
-# Comment=Use this session to run Xfce as your desktop environment
-# Exec=startxfce4
-# Type=XSession
-# DesktopNames=XFCE
-# EOF
-# fi
+# Also configure for existing root user
+mkdir -p /root/.config/xfce4/xfconf/xfce-perchannel-xml/
+cp /etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/xsettings.xml /root/.config/xfce4/xfconf/xfce-perchannel-xml/
+#
+# End OPTIONAL
+###############################################################################
 
 echo "Install is complete."
 echo "Reboot your machine to begin using XRDP."
 echo "XRDP will now use XFCE desktop which is more compatible with remote sessions."
+echo "Window scaling has been set to 2x for better readability."
