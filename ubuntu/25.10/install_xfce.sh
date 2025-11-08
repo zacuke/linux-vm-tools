@@ -118,36 +118,36 @@ if [ ! -e /etc/modules-load.d/hv_sock.conf ]; then
 fi
 
 # Configure the policy xrdp session
-# mkdir -p /etc/polkit-1/localauthority/50-local.d/
-# cat > /etc/polkit-1/localauthority/50-local.d/45-allow-colord.pkla <<EOF
-# [Allow Colord all Users]
-# Identity=unix-user:*
-# Action=org.freedesktop.color-manager.create-device;org.freedesktop.color-manager.create-profile;org.freedesktop.color-manager.delete-device;org.freedesktop.color-manager.delete-profile;org.freedesktop.color-manager.modify-device;org.freedesktop.color-manager.modify-profile
-# ResultAny=no
-# ResultInactive=no
-# ResultActive=yes
-# EOF
+mkdir -p /etc/polkit-1/localauthority/50-local.d/
+cat > /etc/polkit-1/localauthority/50-local.d/45-allow-colord.pkla <<EOF
+[Allow Colord all Users]
+Identity=unix-user:*
+Action=org.freedesktop.color-manager.create-device;org.freedesktop.color-manager.create-profile;org.freedesktop.color-manager.delete-device;org.freedesktop.color-manager.delete-profile;org.freedesktop.color-manager.modify-device;org.freedesktop.color-manager.modify-profile
+ResultAny=no
+ResultInactive=no
+ResultActive=yes
+EOF
 
-# # reconfigure the service
-# systemctl daemon-reload
-# systemctl start xrdp
+# reconfigure the service
+systemctl daemon-reload
+systemctl start xrdp
 
-# # Fix GNOME Keyring PAM daemon control file issue
-# mkdir -p /var/run/user/$(id -u)
-# chmod 0700 /var/run/user/$(id -u)
+# Fix GNOME Keyring PAM daemon control file issue
+mkdir -p /var/run/user/$(id -u)
+chmod 0700 /var/run/user/$(id -u)
 
-# # Ensure gnome-keyring-daemon is installed and configured
-# apt install -y gnome-keyring
+# Ensure gnome-keyring-daemon is installed and configured
+apt install -y gnome-keyring
 
-# # Configure PAM for XRDP sessions
-# if [ -f /etc/pam.d/xrdp-sesman ]; then
-#     if ! grep -q "auth optional pam_gnome_keyring.so" /etc/pam.d/xrdp-sesman; then
-#         echo "auth optional pam_gnome_keyring.so" >> /etc/pam.d/xrdp-sesman
-#     fi
-#     if ! grep -q "session optional pam_gnome_keyring.so auto_start" /etc/pam.d/xrdp-sesman; then
-#         echo "session optional pam_gnome_keyring.so auto_start" >> /etc/pam.d/xrdp-sesman
-#     fi
-# fi
+# Configure PAM for XRDP sessions
+if [ -f /etc/pam.d/xrdp-sesman ]; then
+    if ! grep -q "auth optional pam_gnome_keyring.so" /etc/pam.d/xrdp-sesman; then
+        echo "auth optional pam_gnome_keyring.so" >> /etc/pam.d/xrdp-sesman
+    fi
+    if ! grep -q "session optional pam_gnome_keyring.so auto_start" /etc/pam.d/xrdp-sesman; then
+        echo "session optional pam_gnome_keyring.so auto_start" >> /etc/pam.d/xrdp-sesman
+    fi
+fi
 
 #
 # End XRDP
