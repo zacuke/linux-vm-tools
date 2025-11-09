@@ -93,22 +93,25 @@ if [ ! -f "$HOME/.config/xfce-hidpi-configured" ]; then
     # Set Elementary XFCE (HiDPI) icons
     xfconf-query -c xsettings -p /Net/IconThemeName -s elementary-xfce-hidpi --create -t string
     
-    # Background
+    # set desktop background
     xfconf-query --channel xfce4-desktop --list | grep last-image | while read path; do
         xfconf-query --channel xfce4-desktop --property $path --set  /usr/share/xfce4/backdrops/greybird-wall.svg 
     done
 
-    # enable HiDPI panel settings
+    # increase panel height
     xfconf-query --channel xfce4-panel --list | grep size | while read path; do
         xfconf-query -c xfce4-panel -p $path -s 36 --create -t int
     done
+
+    # increase panel icon size
     xfconf-query --channel xfce4-panel --list | grep icon-size | while read path; do
         xfconf-query -c xfce4-panel -p $path -s 0 --create -t int
     done 
+
+    # disable panel auto hide
     xfconf-query --channel xfce4-panel --list | grep autohide-behavior | while read path; do
         xfconf-query -c xfce4-panel -p $path -s 0 --create -t int
     done 
-
 
     # Create marker file to prevent re-configuration
     mkdir -p "$HOME/.config"
