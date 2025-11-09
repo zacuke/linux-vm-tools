@@ -88,14 +88,18 @@ if [ ! -f "$HOME/.config/xfce-hidpi-configured" ]; then
     # Create marker file to prevent re-configuration
     mkdir -p "$HOME/.config"
     touch "$HOME/.config/xfce-hidpi-configured"
+
     # Window scaling factor
     xfconf-query -c xsettings -p /Gdk/WindowScalingFactor --create --type int  -s 2 
   
     # Window manager theme 
-    xfconf-query -c xfwm4 -p /general/theme --create --type string  -s Yaru-xhdpi 
+    xfconf-query -c xfwm4 -p /general/theme --create --type string  -s Yaru-dark-xhdpi 
  
     # Icon theme
     xfconf-query -c xsettings -p /Net/IconThemeName --create --type string -s elementary-xfce-hidpi
+
+    # GTK theme
+    xfconf-query -c xsettings -p /Net/IconName --create --type string -s Greybird-dark
  
     # Desktop background
     xfconf-query -c xfce4-desktop --property /backdrop/screen0/monitorrdp0/workspace0/last-image --create --type string  -s "/usr/share/xfce4/backdrops/greybird-wall.svg"
