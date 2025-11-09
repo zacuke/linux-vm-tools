@@ -83,40 +83,40 @@ fi
 ###############################################################################
 # Optional for 4k screens
 # Configure XFCE HiDPI settings on first login
-if [ ! -f "$HOME/.config/xfce-hidpi-configured" ]; then
-    # Set window scaling factor
-    xfconf-query -c xsettings -p /Gdk/WindowScalingFactor -s 2 --create -t int
+# if [ ! -f "$HOME/.config/xfce-hidpi-configured" ]; then
+#     # Set window scaling factor
+#     xfconf-query -c xsettings -p /Gdk/WindowScalingFactor -s 2 --create -t int
 
-    # Set Yaru-xhdpi theme for window manager
-    xfconf-query -c xfwm4 -p /general/theme -s Yaru-xhdpi --create -t string
+#     # Set Yaru-xhdpi theme for window manager
+#     xfconf-query -c xfwm4 -p /general/theme -s Yaru-xhdpi --create -t string
 
-    # Set Elementary XFCE (HiDPI) icons
-    xfconf-query -c xsettings -p /Net/IconThemeName -s elementary-xfce-hidpi --create -t string
+#     # Set Elementary XFCE (HiDPI) icons
+#     xfconf-query -c xsettings -p /Net/IconThemeName -s elementary-xfce-hidpi --create -t string
     
-    # set desktop background
-    xfconf-query --channel xfce4-desktop --list | grep last-image | while read path; do
-        xfconf-query --channel xfce4-desktop --property $path --set  /usr/share/xfce4/backdrops/greybird-wall.svg 
-    done
+#     # set desktop background
+#     xfconf-query --channel xfce4-desktop --list | grep last-image | while read path; do
+#         xfconf-query --channel xfce4-desktop --property $path --set  /usr/share/xfce4/backdrops/greybird-wall.svg 
+#     done
 
-    # increase panel height
-    xfconf-query --channel xfce4-panel --list | grep size | while read path; do
-        xfconf-query -c xfce4-panel -p $path -s 36 --create -t int
-    done
+#     # increase panel height
+#     xfconf-query --channel xfce4-panel --list | grep size | while read path; do
+#         xfconf-query -c xfce4-panel -p $path -s 36 --create -t int
+#     done
 
-    # increase panel icon size
-    xfconf-query --channel xfce4-panel --list | grep icon-size | while read path; do
-        xfconf-query -c xfce4-panel -p $path -s 0 --create -t int
-    done 
+#     # increase panel icon size
+#     xfconf-query --channel xfce4-panel --list | grep icon-size | while read path; do
+#         xfconf-query -c xfce4-panel -p $path -s 0 --create -t int
+#     done 
 
-    # disable panel auto hide
-    xfconf-query --channel xfce4-panel --list | grep autohide-behavior | while read path; do
-        xfconf-query -c xfce4-panel -p $path -s 0 --create -t int
-    done 
+#     # disable panel auto hide
+#     xfconf-query --channel xfce4-panel --list | grep autohide-behavior | while read path; do
+#         xfconf-query -c xfce4-panel -p $path -s 0 --create -t int
+#     done 
 
-    # Create marker file to prevent re-configuration
-    mkdir -p "$HOME/.config"
-    touch "$HOME/.config/xfce-hidpi-configured"
-fi
+#     # Create marker file to prevent re-configuration
+#     mkdir -p "$HOME/.config"
+#     touch "$HOME/.config/xfce-hidpi-configured"
+# fi
 
 startxfce4
 EOF
@@ -190,6 +190,18 @@ fi
 ###############################################################################
  
 echo "Install is complete."
-echo "Reboot your machine to begin using XRDP."
 echo "XRDP will now use XFCE desktop which is more compatible with remote sessions."
 echo "HiDPI scaling (2x) will be configured automatically on first XRDP login."
+
+# Create reboot script that will execute after this script completes
+cat > /tmp/reboot-after-install.sh << 'EOF'
+#!/bin/bash
+sleep 1
+echo "Rebooting system to apply all changes..."
+sudo reboot
+EOF
+chmod +x /tmp/reboot-after-install.sh
+
+# Launch reboot script in background and exit this script
+/tmp/reboot-after-install.sh &
+echo "Reboot process started in background. System will reboot shortly."
