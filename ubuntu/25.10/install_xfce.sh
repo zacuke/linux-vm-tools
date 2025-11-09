@@ -210,3 +210,4 @@ chmod +x /tmp/reboot-after-install.sh
 # Launch reboot script in background and exit this script
 /tmp/reboot-after-install.sh &
 echo "Reboot process started in background. System will reboot shortly."
+
