@@ -100,17 +100,19 @@ if [ ! -f "$HOME/.config/xfce-hidpi-configured" ]; then
     # Desktop background
     xfconf-query -c xfce4-desktop --property /backdrop/screen0/monitorrdp0/workspace0/last-image --create --type string  -s "/usr/share/xfce4/backdrops/greybird-wall.svg"
  
-    sleep 7
+    (
+        # Sleep for a bit to let XFCE finish loading
+        sleep 3
 
-    # Panel height
-    xfconf-query -c xfce4-panel -p /panels/panel-1/size --create --type int -s 36
+        # Panel height
+        xfconf-query -c xfce4-panel -p /panels/panel-1/size --create --type int -s 36
 
-    # Panel icon size
-    xfconf-query -c xfce4-panel -p /panels/panel-1/icon-size --create --type int -s 0
+        # Panel icon size
+        xfconf-query -c xfce4-panel -p /panels/panel-1/icon-size --create --type int -s 0
 
-    # Panel autohide behavior
-    xfconf-query -c xfce4-panel -p /panels/panel-1/autohide-behavior --create --type int -s 0
-
+        # Panel autohide behavior
+        xfconf-query -c xfce4-panel -p /panels/panel-1/autohide-behavior --create --type int -s 0
+    ) >"$HOME/.config/xfce-hidpi-setup.log" 2>&1 &
 
 fi
 
