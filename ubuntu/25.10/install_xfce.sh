@@ -1,7 +1,12 @@
 #!/bin/bash
 export DEBIAN_FRONTEND=noninteractive
 #
-# This script is for Ubuntu 25.10 Trixie to download and install XRDP+XFCE
+# This script is for Ubuntu 25.10 Trixie to install XRDP+XFCE
+#
+# It assumes existing vanilla Gnome and Wayland.
+#
+# XFCE will host the XRDP sessions 
+# Gnome 49+ is not compatible with XRDP because of Wayland
 #
 
 ###############################################################################
@@ -48,15 +53,16 @@ sed -i_orig -e 's/crypt_level=high/crypt_level=none/g' /etc/xrdp/xrdp.ini
 # disable bitmap compression since its local its much faster
 sed -i_orig -e 's/bitmap_compression=true/bitmap_compression=false/g' /etc/xrdp/xrdp.ini
 
+xhost +
+
 # Create XFCE session script for XRDP
 cat > /etc/xrdp/startxfce.sh << 'EOF'
 #!/bin/sh
-export XDG_SESSION_TYPE=x11
-export GDK_BACKEND=x11
-export XDG_CURRENT_DESKTOP=XFCE
+export XDG_CONFIG_HOME="$HOME/.config-xfce"
+export XDG_DATA_HOME="$HOME/.local-xfce"
+export XDG_CACHE_HOME="$HOME/.cache-xfce"
+mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_CACHE_HOME"
 export XDG_SESSION_DESKTOP=xfce
-export XDG_CONFIG_DIRS=/etc/xdg/xdg-xfce:/etc/xdg
-export XDG_DATA_DIRS=/usr/share/xfce:/usr/local/share:/usr/share:/var/lib/snapd/desktop
 export LIBGL_ALWAYS_SOFTWARE=1
 export GALLIUM_DRIVER=llvmpipe
 if [ -r /etc/default/locale ]; then
@@ -69,16 +75,14 @@ if [ ! -f "$HOME/.config/xfce-configured" ]; then
     mkdir -p "$HOME/.config"
     touch "$HOME/.config/xfce-configured"
 
-    xhost +
-
     # Window manager theme 
-    xfconf-query -c xfwm4 -p /general/theme --create --type string  -s Yaru-dark
+    xfconf-query -c xfwm4 -p /general/theme --create --type string  -s Greybird-dark
  
     # Icon theme
     xfconf-query -c xsettings -p /Net/IconThemeName --create --type string -s elementary-xfce
 
     # GTK theme
-    xfconf-query -c xsettings -p /Net/IconName --create --type string -s Greybird-dark
+    xfconf-query -c xsettings -p /Net/ThemeName --create --type string -s Greybird-dark
  
     # Desktop background
     xfconf-query -c xfce4-desktop --property /backdrop/screen0/monitorrdp0/workspace0/last-image --create --type string  -s "/usr/share/xfce4/backdrops/greybird-wall.svg"
@@ -126,6 +130,7 @@ EOF
 # reconfigure the service
 systemctl daemon-reload
 systemctl start xrdp
+#systemctl --user mask --now gnome-keyring-daemon.service gsd-* gnome-session*
 
 #
 # End XRDP
@@ -134,18 +139,13 @@ systemctl start xrdp
 # Disable auto login
 #
 
-# Disable GDM auto login if configured
+# We don't want the virtual console to sign into Gnome automatically
 if [ -f /etc/gdm3/custom.conf ]; then
     sed -i 's/^AutomaticLoginEnable=.*/AutomaticLoginEnable=false/' /etc/gdm3/custom.conf
     sed -i 's/^AutomaticLogin=.*/# AutomaticLogin=/' /etc/gdm3/custom.conf
 fi
-
-# Disable LightDM auto login if configured
-if [ -f /etc/lightdm/lightdm.conf ]; then
-    sed -i 's/^autologin-user=.*/# autologin-user=/' /etc/lightdm/lightdm.conf
-    sed -i 's/^autologin-user-timeout=.*/# autologin-user-timeout=/' /etc/lightdm/lightdm.conf
-fi
-
- 
 echo "Install is complete."
 echo "Reboot your machine to begin using XRDP."
+echo "Gnome will logout in 15 seconds."
+
+( sleep 15 && gnome-session-quit --logout --no-prompt ) &
