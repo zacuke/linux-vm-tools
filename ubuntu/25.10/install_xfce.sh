@@ -1,18 +1,8 @@
 #!/bin/bash
 
-#
-# This script is for Ubuntu 22.04 Jammy Jellyfish to download and install XRDP+XORGXRDP via
-# source.
-#
-# Major thanks to: http://c-nergy.be/blog/?p=11336 for the tips.
-#
+# This script is for Ubuntu 25.10 to download and install XRDP. 
+# Gnome uses wayland now, so we have to use XFCE or KDE
 
-###############################################################################
-# Use HWE kernel packages
-#
-HWE=""
-#HWE="-hwe-22.04"
-export DEBIAN_FRONTEND=noninteractive
 ###############################################################################
 # Update our machine to the latest code if we need to.
 #
@@ -35,10 +25,10 @@ fi
 #
 
 # Install hv_kvp utils
-apt install -y linux-tools-virtual${HWE}
-apt install -y linux-cloud-tools-virtual${HWE}
+apt install -y linux-tools-virtual
+apt install -y linux-cloud-tools-virtual
 
-# Install XFCE desktop (more compatible with XRDP)
+# Install XFCE desktop
 apt install -y xfce4 xfce4-goodies
 
 # Install the xrdp service so we have the auto start behavior
@@ -60,18 +50,76 @@ sed -i_orig -e 's/bitmap_compression=true/bitmap_compression=false/g' /etc/xrdp/
 # Create XFCE session script for XRDP
 cat > /etc/xrdp/startxfce.sh << 'EOF'
 #!/bin/sh
+
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
 export XDG_CURRENT_DESKTOP=XFCE
 export XDG_SESSION_DESKTOP=xfce
 export XDG_CONFIG_DIRS=/etc/xdg/xdg-xfce:/etc/xdg
 export XDG_DATA_DIRS=/usr/share/xfce:/usr/local/share:/usr/share:/var/lib/snapd/desktop
+export XDG_SESSION_PATH=/run/user/$(id -u)
 export LIBGL_ALWAYS_SOFTWARE=1
 export GALLIUM_DRIVER=llvmpipe
+
+# Create XDG runtime directory if it doesn't exist
+if [ ! -d "$XDG_RUNTIME_DIR" ]; then
+    export XDG_RUNTIME_DIR=/run/user/$(id -u)
+    mkdir -p "$XDG_RUNTIME_DIR"
+    chmod 0700 "$XDG_RUNTIME_DIR"
+fi
+
 if [ -r /etc/default/locale ]; then
   . /etc/default/locale
   export LANG LANGUAGE
 fi
+
+# Start dbus if not running
+if ! pgrep -x dbus-daemon > /dev/null; then
+    dbus-launch --sh-syntax
+fi
+
+# Configure X11 access control to allow Firefox and other applications
+xhost +
+
+###############################################################################
+# Configure XFCE settings on first login
+if [ ! -f "$HOME/.config/xfce-configured" ]; then   
+
+    # Create marker file to prevent re-configuration
+    mkdir -p "$HOME/.config"
+    touch "$HOME/.config/xfce-configured"
+
+    # Window scaling factor
+    #xfconf-query -c xsettings -p /Gdk/WindowScalingFactor --create --type int  -s 2 
+  
+    # Window manager theme 
+    xfconf-query -c xfwm4 -p /general/theme --create --type string  -s Yaru-dark-xhdpi 
+ 
+    # Icon theme
+    xfconf-query -c xsettings -p /Net/IconThemeName --create --type string -s elementary-xfce-hidpi
+
+    # GTK theme
+    xfconf-query -c xsettings -p /Net/IconName --create --type string -s Greybird-dark
+ 
+    # Desktop background
+    xfconf-query -c xfce4-desktop --property /backdrop/screen0/monitorrdp0/workspace0/last-image --create --type string  -s "/usr/share/xfce4/backdrops/greybird-wall.svg"
+ 
+    # (
+    #     # Sleep for a bit to let XFCE finish loading
+    #     sleep 3
+
+    #     # Panel height
+    #     xfconf-query -c xfce4-panel -p /panels/panel-1/size --create --type int -s 36
+
+    #     # Panel icon size
+    #     xfconf-query -c xfce4-panel -p /panels/panel-1/icon-size --create --type int -s 0
+
+    #     # Panel autohide behavior
+    #     xfconf-query -c xfce4-panel -p /panels/panel-1/autohide-behavior --create --type int -s 0
+    # ) >"$HOME/.config/xfce-hidpi-setup.log" 2>&1 &
+
+fi
+
 startxfce4
 EOF
 chmod a+x /etc/xrdp/startxfce.sh
@@ -115,12 +163,22 @@ EOF
 systemctl daemon-reload
 systemctl start xrdp
 
-#
-# End XRDP
-###############################################################################
-###############################################################################
-# Disable auto login
-#
+# Fix GNOME Keyring PAM daemon control file issue
+mkdir -p /var/run/user/$(id -u)
+chmod 0700 /var/run/user/$(id -u)
+
+# Ensure gnome-keyring-daemon is installed and configured
+apt install -y gnome-keyring
+
+# Configure PAM for XRDP sessions
+if [ -f /etc/pam.d/xrdp-sesman ]; then
+    if ! grep -q "auth optional pam_gnome_keyring.so" /etc/pam.d/xrdp-sesman; then
+        echo "auth optional pam_gnome_keyring.so" >> /etc/pam.d/xrdp-sesman
+    fi
+    if ! grep -q "session optional pam_gnome_keyring.so auto_start" /etc/pam.d/xrdp-sesman; then
+        echo "session optional pam_gnome_keyring.so auto_start" >> /etc/pam.d/xrdp-sesman
+    fi
+fi
 
 # Disable GDM auto login if configured
 if [ -f /etc/gdm3/custom.conf ]; then
@@ -128,12 +186,10 @@ if [ -f /etc/gdm3/custom.conf ]; then
     sed -i 's/^AutomaticLogin=.*/# AutomaticLogin=/' /etc/gdm3/custom.conf
 fi
 
-# Disable LightDM auto login if configured
-if [ -f /etc/lightdm/lightdm.conf ]; then
-    sed -i 's/^autologin-user=.*/# autologin-user=/' /etc/lightdm/lightdm.conf
-    sed -i 's/^autologin-user-timeout=.*/# autologin-user-timeout=/' /etc/lightdm/lightdm.conf
-fi
 
+#
+# End XRDP
+###############################################################################
  
 echo "Install is complete."
 echo "Reboot your machine to begin using XRDP."
