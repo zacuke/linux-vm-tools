@@ -192,9 +192,6 @@ sed -i 's/^\(\s*\)-session\s\+optional\s\+pam_kwallet5.so\s\+auto_start/#\1-sess
 if ! grep -q 'session optional pam_xauth.so' "$PAM_FILE"; then
     echo "session optional pam_xauth.so" >> "$PAM_FILE"
 fi
- 
-# remove app that crashes
-sudo apt remove light-locker -y
 
 # reconfigure the service
 systemctl daemon-reload
