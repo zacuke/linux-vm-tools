@@ -59,7 +59,7 @@ cat > /etc/xrdp/startxfce.sh << 'EOF'
 #!/bin/sh
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
-export XDG_CURRENT_DESKTOP=xfce
+export XDG_CURRENT_DESKTOP=XFCE
 export XDG_SESSION_DESKTOP=xfce
 export XDG_CONFIG_DIRS=/etc/xdg/xdg-xfce:/etc/xdg
 export XDG_DATA_DIRS=/usr/share/xfce:/usr/local/share:/usr/share:/var/lib/snapd/desktop
@@ -177,6 +177,20 @@ update-alternatives --set x-terminal-emulator /usr/bin/xfce4-terminal.wrapper
 if [ -f /etc/gdm3/custom.conf ]; then
     sed -i 's/^AutomaticLoginEnable=.*/AutomaticLoginEnable=false/' /etc/gdm3/custom.conf
     sed -i 's/^AutomaticLogin=.*/# AutomaticLogin=/' /etc/gdm3/custom.conf
+fi
+
+# Fix PAM configuration for XRDP
+PAM_FILE="/etc/pam.d/xrdp-sesman"
+
+# Comment out gnome-keyring and kwallet PAM lines safely
+sed -i 's/^\(\s*\)-auth\s\+optional\s\+pam_gnome_keyring.so/#\1-auth optional pam_gnome_keyring.so/' "$PAM_FILE"
+sed -i 's/^\(\s*\)-auth\s\+optional\s\+pam_kwallet5.so/#\1-auth optional pam_kwallet5.so/' "$PAM_FILE"
+sed -i 's/^\(\s*\)-session\s\+optional\s\+pam_gnome_keyring.so\s\+auto_start/#\1-session optional pam_gnome_keyring.so auto_start/' "$PAM_FILE"
+sed -i 's/^\(\s*\)-session\s\+optional\s\+pam_kwallet5.so\s\+auto_start/#\1-session optional pam_kwallet5.so auto_start/' "$PAM_FILE"
+
+# Append pam_xauth.so only if it is not already there
+if ! grep -q 'session optional pam_xauth.so' "$PAM_FILE"; then
+    echo "session optional pam_xauth.so" >> "$PAM_FILE"
 fi
  
 # remove app that crashes
