@@ -61,7 +61,6 @@ export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
 export XDG_CURRENT_DESKTOP=xfce
 export XDG_SESSION_DESKTOP=xfce
-export XDG_SESSION_PATH="/org/freedesktop/login1/session-xrdp"
 export XDG_CONFIG_DIRS=/etc/xdg/xdg-xfce:/etc/xdg
 export XDG_DATA_DIRS=/usr/share/xfce:/usr/local/share:/usr/share:/var/lib/snapd/desktop
 export LIBGL_ALWAYS_SOFTWARE=1
