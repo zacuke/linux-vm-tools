@@ -86,13 +86,13 @@ if [ ! -f "$HOME/.config/xfce-configured" ]; then
     xfconf-query -c xsettings -p /Xft/DPI --create --type int -s 120
 
     # Window manager theme 
-    xfconf-query -c xfwm4 -p /general/theme --create --type string  -s yaru-dark
+    xfconf-query -c xfwm4 -p /general/theme --create --type string  -s Yaru-dark
  
     # Icon theme
-    xfconf-query -c xsettings -p /Net/IconThemeName --create --type string -s yaru
+    xfconf-query -c xsettings -p /Net/IconThemeName --create --type string -s Yaru
 
     # GTK theme
-    xfconf-query -c xsettings -p /Net/ThemeName --create --type string -s yaru-dark
+    xfconf-query -c xsettings -p /Net/ThemeName --create --type string -s Yaru-dark
 
     # Wait for panel to load
     (
@@ -195,7 +195,7 @@ if ! grep -q 'session optional pam_xauth.so' "$PAM_FILE"; then
 fi
 
 # remove app that crashes
-sudo apt remove light-locker
+# sudo apt remove light-locker -y
 
 # reconfigure the service
 systemctl daemon-reload
