@@ -1,13 +1,11 @@
 #!/bin/bash
 
 #
-# This script is for Ubuntu 25.10 Trixie to install XRDP+XFCE
+# This script is for Ubuntu 25.10 Trixie to install xrdp and xfce 
+# for hyper-v hvsocket compatibility. It assumes existing vanilla 
+# Gnome and Wayland. Xfce will be used by xrdp sessions.
 #
-# It assumes existing vanilla Gnome and Wayland.
-#
-# XFCE will be used by the XRDP sessions.
-#
-# Gnome 49+ is not compatible with XRDP because of Wayland.
+# Gnome 49+ is not compatible with xrdp because of Wayland.
 #
 
 ###############################################################################
@@ -37,7 +35,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt install -y linux-tools-virtual
 apt install -y linux-cloud-tools-virtual
 
-# Install XFCE desktop (more compatible with XRDP)
+# Install xfce 
 apt install -y xfce4 xfce4-goodies
 
 # Install the xrdp service so we have the auto start behavior
@@ -56,12 +54,12 @@ sed -i_orig -e 's/crypt_level=high/crypt_level=none/g' /etc/xrdp/xrdp.ini
 # disable bitmap compression since its local its much faster
 sed -i_orig -e 's/bitmap_compression=true/bitmap_compression=false/g' /etc/xrdp/xrdp.ini
 
-# Create XFCE session script for XRDP
+# Create xfce session script for XRDP
 cat > /etc/xrdp/startxfce.sh << 'EOF'
 #!/bin/sh
 export XDG_SESSION_TYPE=x11
 export GDK_BACKEND=x11
-export XDG_CURRENT_DESKTOP=XFCE
+export XDG_CURRENT_DESKTOP=xfce
 export XDG_SESSION_DESKTOP=xfce
 export XDG_SESSION_PATH="/org/freedesktop/login1/session-xrdp"
 export XDG_CONFIG_DIRS=/etc/xdg/xdg-xfce:/etc/xdg
@@ -73,15 +71,14 @@ if [ -r /etc/default/locale ]; then
   export LANG LANGUAGE
 fi
 
-
 if [ ! -f "$HOME/.config/xfce-configured" ]; then   
  
     mkdir -p "$HOME/.config"
     touch "$HOME/.config/xfce-configured"
 
     #<optional>
-    # Set dark theme 
-    # Set high dpi displays
+    # Dark theme 
+    # Increase panel size
     # Desktop background
     xfconf-query -c xfce4-desktop --property /backdrop/screen0/monitorrdp0/workspace0/last-image --create --type string  -s "/usr/share/xfce4/backdrops/greybird-wall.svg"
     
@@ -114,7 +111,7 @@ if [ ! -f "$HOME/.config/xfce-configured" ]; then
     (
       sleep 5
 
-      xfce4-terminal --title="XRDP Setup Complete" --geometry=60x10 --command="bash -c \"echo 'Press Enter to reboot'; read; sudo reboot\""
+      xfce4-terminal --title="Hyper-V Setup Complete" --geometry=60x10 --command="bash -c \"echo 'Press Enter to reboot'; read; sudo reboot\""
     )  >"$HOME/.config/xfce-configured-setup.log" 2>&1 &
 fi
 
@@ -188,6 +185,9 @@ sed -i 's/^\(\s*\)-session\s\+optional\s\+pam_kwallet5.so\s\+auto_start/#\1-sess
 if ! grep -q 'session optional pam_xauth.so' "$PAM_FILE"; then
     echo "session optional pam_xauth.so" >> "$PAM_FILE"
 fi
+
+# remove app that crashes
+sudo apt remove light-locker
 
 # reconfigure the service
 systemctl daemon-reload
